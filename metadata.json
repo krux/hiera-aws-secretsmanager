@@ -5,8 +5,6 @@
   "summary": "Hiera lookup_key function for AWS Secrets Manager",
   "license": "Apache-2.0",
   "source": "https://github.com/salesforce/hiera-aws-secretsmanager (Presumably)",
-  "project_page": null,
-  "issues_url": null,
   "dependencies": [
     {
       "name": "puppetlabs-stdlib",
