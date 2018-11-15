@@ -1,5 +1,7 @@
 source ENV['GEM_SOURCE'] || 'https://rubygems.org'
 
+gem 'aws-sdk-secretsmanager'
+
 gem 'facter', '>= 1.7.0'
 gem 'metadata-json-lint'
 gem 'puppet', '>= 5.5'
