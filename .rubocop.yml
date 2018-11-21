@@ -1,3 +1,7 @@
+# Conflicts with RSpec `let (:var) { value }` form
+Lint/ParenthesesAsGroupedExpression:
+  Enabled: false
+
 Metrics/LineLength:
   Max: 125
 
