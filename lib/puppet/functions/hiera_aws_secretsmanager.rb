@@ -30,8 +30,9 @@ Puppet::Functions.create_function(:hiera_aws_secretsmanager) do
     raise Puppet::DataBinding::LookupError, 'hiera_aws_secretsmanager requires the aws-sdk-secretsmanager gem installed'
   end
 
-  @list_secrets_max = 4000
-  @secrets_list_key = '_hiera_aws_serets_manager_key_list_'.freeze
+  @@list_secrets_max = 4000
+  @@secrets_list_key = '_hiera_aws_seretsmanager_key_list_'.freeze
+  @@smclient_key = '_hiera_aws_secretsmanager_smclient_'.freeze
 
   def lookup_key(key, options, context)
     @context = context
@@ -50,19 +51,19 @@ Puppet::Functions.create_function(:hiera_aws_secretsmanager) do
   private
 
   def smclient
-    unless @context.cache_has_key('smclient')
+    unless @context.cache_has_key(@@smclient_key)
       # No arguments being passed. We expect SDK configuration to
       # happen exclusively in the environment (including
       # $HOME/.aws/credentials, etc)
       @context.cache('smclient', Aws::SecretsManager::Client.new)
     end
 
-    @context.cached_value('smclient')
+    @context.cached_value(@@smclient_key)
   end
 
   def cached_secret(secret_name)
     unless @context.cache_has_key(secret_name)
-      secret = smclient.get_secret_value(secret_name)
+      secret = smclient.get_secret_value(secret_id: secret_name)
       @context.cache(secret_name, secret.secret_string)
     end
 
@@ -70,17 +71,17 @@ Puppet::Functions.create_function(:hiera_aws_secretsmanager) do
   end
 
   def cached_secrets_list
-    unless @context.cache_has_key(@secrets_list_key)
-      batch = smclient.list_secrets(max_results: @list_secrets_max)
+    unless @context.cache_has_key(@@secrets_list_key)
+      batch = smclient.list_secrets(max_results: @@list_secrets_max)
       secrets_list = batch.secret_list.map(&:name)
       while batch.next_token do
-        batch = smclient.list_secrets(max_results: @list_secrets_max, next_token: batch.next_token)
+        batch = smclient.list_secrets(max_results: @@list_secrets_max, next_token: batch.next_token)
         secrets_list.concat batch.secret_list.map(&:name)
-        @context.cache(SECRET_LIST_KEY, secrets_list)
       end
+      @context.cache(@@secrets_list_key, secrets_list)
     end
 
-    @context.cached_value(@secrets_list_key)
+    @context.cached_value(@@secrets_list_key)
   end
 
   def secret_exists?(secret_name)

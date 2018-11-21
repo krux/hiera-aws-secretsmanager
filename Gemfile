@@ -12,4 +12,5 @@ gem 'rubocop'
 
 group :development do
   gem 'pry'
+  gem 'pry-rescue'
 end

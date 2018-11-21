@@ -1,8 +1,0 @@
----
-version: 5
-
-hierarchy:
-  - name: AWS Secrets Manager
-    lookup_key: hiera-aws-secretsmanager
-    uris:
-      - 'pe6653_poc/%{::environment}'

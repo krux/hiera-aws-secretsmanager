@@ -6,3 +6,5 @@ require 'puppetlabs_spec_helper/module_spec_helper'
 require 'rspec-puppet'
 
 require 'puppet/functions/hiera_aws_secretsmanager'
+
+#require 'pry-rescue/rspec' rescue nil
