@@ -13,7 +13,7 @@ describe :hiera_aws_secretsmanager do
     let (:key) { 'test::key' }
     let (:options) { {'uri' => '/test/secret/path'} }
 
-    let (:secrets) { OpenStruct.new(name: secret_name, secret_string: secret_string) }
+    let (:secret) { OpenStruct.new(name: secret_name, secret_string: secret_string) }
     let (:secret_name) { "#{options['uri']}/#{key}" }
     let (:secret_string) { 'test-secret' }
 
@@ -35,18 +35,18 @@ describe :hiera_aws_secretsmanager do
 
     before do
       @smclient = instance_double(Aws::SecretsManager::Client)
-      expect(Aws::SecretsManager::Client).to receive(:new).and_return(@smclient)
+      allow(Aws::SecretsManager::Client).to receive(:new).and_return(@smclient)
       @fake_cache = {
         '_hiera_aws_secretsmanager_smclient_' => @smclient,
       }
       allow(@smclient)
         .to receive(:list_secrets)
-        .and_return(OpenStruct.new(secret_list: [secrets]))
+        .and_return(OpenStruct.new(secret_list: [secret]))
 
       allow(@smclient)
         .to receive(:get_secret_value)
         .with(hash_including(secret_id: secret_name))
-        .and_return(secrets.first)
+        .and_return(secret)
     end
 
     context 'that is not cached' do
