@@ -30,3 +30,25 @@ task :test do
     Rake::Task[test].invoke
   end
 end
+
+desc 'Simple REPL for simple testing'
+task :repl do
+  require 'pry'
+  require_relative 'lib/puppet/functions/hiera_aws_secretsmanager'
+  class Context < Hash
+    def has_cached_key(key)
+      has_key? key
+    end
+
+    def cached_value(key)
+      self[key]
+    end
+
+    def cache(key, value)
+      self[key] = value
+    end
+  end
+
+  def list; end
+  binding.pry
+end
