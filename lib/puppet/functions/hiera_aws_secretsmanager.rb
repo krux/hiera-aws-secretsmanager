@@ -30,9 +30,13 @@ Puppet::Functions.create_function(:hiera_aws_secretsmanager) do
     raise Puppet::DataBinding::LookupError, 'hiera_aws_secretsmanager requires the aws-sdk-secretsmanager gem installed'
   end
 
-  @@list_secrets_max = 4000
-  @@secrets_list_key = '_hiera_aws_seretsmanager_key_list_'.freeze
-  @@smclient_key = '_hiera_aws_secretsmanager_smclient_'.freeze
+  # Lame explicit check for already defined constants courtesy of
+  # Puppet feeling the need to reload this file over and over.
+  unless defined? LIST_SECRETS_MAX
+    LIST_SECRETS_MAX = 4000
+    SECRETS_LIST_KEY = '_hiera_aws_seretsmanager_key_list_'.freeze
+    SMCLIENT_KEY = '_hiera_aws_secretsmanager_smclient_'.freeze
+  end
 
   def lookup_key(key, options, context)
     @context = context
@@ -51,14 +55,14 @@ Puppet::Functions.create_function(:hiera_aws_secretsmanager) do
   private
 
   def smclient
-    unless @context.cache_has_key(@@smclient_key)
+    unless @context.cache_has_key(SMCLIENT_KEY)
       # No arguments being passed. We expect SDK configuration to
       # happen exclusively in the environment (including
       # $HOME/.aws/credentials, etc)
-      @context.cache('smclient', Aws::SecretsManager::Client.new)
+      @context.cache(SMCLIENT_KEY, Aws::SecretsManager::Client.new)
     end
 
-    @context.cached_value(@@smclient_key)
+    @context.cached_value(SMCLIENT_KEY)
   end
 
   def cached_secret(secret_name)
@@ -71,20 +75,20 @@ Puppet::Functions.create_function(:hiera_aws_secretsmanager) do
   end
 
   def cached_secrets_list
-    unless @context.cache_has_key(@@secrets_list_key)
-      batch = smclient.list_secrets(max_results: @@list_secrets_max)
+    unless @context.cache_has_key(SECRETS_LIST_KEY)
+      batch = smclient.list_secrets(max_results: LIST_SECRETS_MAX)
       secrets_list = batch.secret_list.map(&:name)
       while batch.next_token do
-        batch = smclient.list_secrets(max_results: @@list_secrets_max, next_token: batch.next_token)
+        batch = smclient.list_secrets(max_results: LIST_SECRETS_MAX, next_token: batch.next_token)
         secrets_list.concat batch.secret_list.map(&:name)
       end
-      @context.cache(@@secrets_list_key, secrets_list)
+      @context.cache(SECRETS_LIST_KEY, secrets_list)
     end
 
-    @context.cached_value(@@secrets_list_key)
+    @context.cached_value(SECRETS_LIST_KEY)
   end
 
   def secret_exists?(secret_name)
-    cached_secrets_list.include? secret_name
+    @context.cache_has_key(secret_name) or cached_secrets_list.include? secret_name
   end
 end
