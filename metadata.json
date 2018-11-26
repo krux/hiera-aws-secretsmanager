@@ -1,10 +1,10 @@
 {
-  "name": "salesforce-hiera_aws_secretsmanager",
+  "name": "hiera-aws-secretsmanager",
   "version": "0.1.0",
   "author": "Steven Lumos <slumos@salesforce.com>",
   "summary": "Hiera lookup_key function for AWS Secrets Manager",
   "license": "Apache-2.0",
-  "source": "https://github.com/salesforce/hiera-aws-secretsmanager (Presumably)",
+  "source": "https://github.com/krux/hiera-aws-secretsmanager",
   "dependencies": [
     {
       "name": "puppetlabs-stdlib",
