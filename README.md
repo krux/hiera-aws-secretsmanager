@@ -56,8 +56,8 @@ version: 5
 hierarchy:
   - name: AWS Secrets Manager
     lookup_key: hiera_aws_secretsmanager
-	uris:
-	  - /secrets/${::environment}/
+    uris:
+      - /secrets/${::environment}/
 ```
 
 Then `lookup('myapp::database::password'` will find,
