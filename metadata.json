@@ -1,5 +1,5 @@
 {
-  "name": "hiera-aws-secretsmanager",
+  "name": "krux-hiera_aws_secretsmanager",
   "version": "0.1.0",
   "author": "Steven Lumos <slumos@salesforce.com>",
   "summary": "Hiera lookup_key function for AWS Secrets Manager",
