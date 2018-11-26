@@ -43,9 +43,9 @@ package { 'aws-sdk-secretsmanager':
 Auth is expected to be taken care of outside of Puppet. There are
 multiple ways to do this, anything accepted by the AWS SDK should work.
 
-* AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
-* $HOME/.aws/credentials
-* Instance Profile Credentials
+* `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` envvars
+* `$HOME/.aws/credentials`
+* [https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html](Instance Profile Credentials)
 
 Add to `hiera.yaml`:
 
@@ -60,7 +60,7 @@ hierarchy:
       - /secrets/${::environment}/
 ```
 
-Then `lookup('myapp::database::password'` will find,
+Then `lookup('myapp::database::password')` will find,
 e.g. `/secrets/development/myapp::database::password` in Secrets
 Manager and return its `secret_string` attribute.
 
