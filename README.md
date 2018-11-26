@@ -47,6 +47,8 @@ multiple ways to do this, anything accepted by the AWS SDK should work.
 * `$HOME/.aws/credentials`
 * [https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html](Instance Profile Credentials)
 
+### Configuration
+
 Add to `hiera.yaml`:
 
 ``` yaml
@@ -64,9 +66,18 @@ Then `lookup('myapp::database::password')` will find,
 e.g. `/secrets/development/myapp::database::password` in Secrets
 Manager and return its `secret_string` attribute.
 
+### Caching
+
+In order to conserve API calls (which are not free), lookup will list
+and cache all secret names on first execution, as well any secrets
+fetched.
+
 ## Limitations
 
 Only tested on our (Salesforce DMP) own infrastructure so far.
 
 Only returns `secret_string`. There is no way to return
 `secret_binary` or any other attribute from the secret.
+
+There is no way to disable the first step of caching all secret names.
+
