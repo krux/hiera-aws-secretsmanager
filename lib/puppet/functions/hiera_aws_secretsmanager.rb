@@ -33,7 +33,7 @@ Puppet::Functions.create_function(:hiera_aws_secretsmanager) do
   # Lame explicit check for already defined constants courtesy of
   # Puppet feeling the need to reload this file over and over.
   unless defined? LIST_SECRETS_MAX
-    LIST_SECRETS_MAX = 4000
+    LIST_SECRETS_MAX = 100
     SECRETS_LIST_KEY = '_hiera_aws_seretsmanager_key_list_'.freeze
     SMCLIENT_KEY = '_hiera_aws_secretsmanager_smclient_'.freeze
   end
