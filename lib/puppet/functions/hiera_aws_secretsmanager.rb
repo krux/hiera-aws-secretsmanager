@@ -40,6 +40,7 @@ Puppet::Functions.create_function(:hiera_aws_secretsmanager) do
 
   def lookup_key(key, options, context)
     @context = context
+    @options = options
     unless options.include? 'uri'
       raise ArgumentError, "either 'uri' or 'uris' must be set in hiera.yaml"
     end
@@ -59,7 +60,10 @@ Puppet::Functions.create_function(:hiera_aws_secretsmanager) do
       # No arguments being passed. We expect SDK configuration to
       # happen exclusively in the environment (including
       # $HOME/.aws/credentials, etc)
-      @context.cache(SMCLIENT_KEY, Aws::SecretsManager::Client.new)
+      unless @options.key? 'region'
+        raise ArgumentError, 'options: {region: ...} must be set in hiera.yaml'
+      end
+      @context.cache(SMCLIENT_KEY, Aws::SecretsManager::Client.new(region: @options['region']))
     end
 
     @context.cached_value(SMCLIENT_KEY)
