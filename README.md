@@ -47,6 +47,36 @@ multiple ways to do this, anything accepted by the AWS SDK should work.
 * `$HOME/.aws/credentials`
 * [https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html](Instance Profile Credentials)
 
+### Authorization
+
+The requesting entity will need the following privilege.
+
+Restricting `secretsmanager:GetSecretValue` to some prefix in your
+Secrets Manager naming scheme is recommended.
+
+As of 2018-11-26, `secretsmanager:ListSecrets` is all or nothing. It
+can not be restricted to a prefix.
+
+``` json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowPuppetSecrets",
+      "Effect": "Allow",
+      "Action": "secretsmanager:GetSecretValue",
+      "Resource": "arn:aws:secretsmanager:*:*:secret:puppet/*"
+    },
+    {
+      "Sid": "AllowListAllSecrets",
+      "Effect": "Allow",
+      "Action": "secretsmanager:ListSecrets",
+      "Resource": "*"
+    }
+  ]
+}
+```
+
 ### Configuration
 
 Add to `hiera.yaml`:
@@ -70,7 +100,8 @@ Manager and return its `secret_string` attribute.
 
 In order to conserve API calls (which are not free), lookup will list
 and cache all secret names on first execution, as well any secrets
-fetched.
+fetched. This is why `secretsmanager:ListSecrets` privilege is
+required.
 
 ## Limitations
 
@@ -79,5 +110,4 @@ Only tested on our (Salesforce DMP) own infrastructure so far.
 Only returns `secret_string`. There is no way to return
 `secret_binary` or any other attribute from the secret.
 
-There is no way to disable the first step of caching all secret names.
-
+There is no way to skip caching of secret names.
