@@ -10,7 +10,12 @@ describe :hiera_aws_secretsmanager do
   end
 
   let (:key) { 'test::key' }
-  let (:options) { {'uri' => '/test/secret/path'} }
+  let (:options) {
+    {
+      'uri' => '/test/secret/path',
+      'region' => 'us-east-1',
+    }
+  }
 
   let (:context) {
     double(Puppet::Pops::Lookup::Context).tap do |ctx|
@@ -58,21 +63,45 @@ describe :hiera_aws_secretsmanager do
   end
 
   context 'without a cached client' do
-    it 'creates and caches a new client' do
+    before do
       expect(context)
         .to receive(:cache_has_key)
         .with(smclient_key)
         .and_return(false).ordered
+    end
 
-      expect(Aws::SecretsManager::Client)
-        .to receive(:new)
-        .and_return(smclient).ordered
+    context 'and no region is given' do
+      before do
+        options.delete('region')
+      end
 
-      expect(context)
-        .to receive(:cache)
-        .with(smclient_key, smclient).ordered
+      it 'returns an ArgumentError' do
+        expect(subject)
+          .to run
+          .with_params(key, options, context)
+          .and_raise_error(ArgumentError)
+      end
+    end
 
-      expect(subject).to run.with_params(key, options, context)
+    context 'and region option is given' do
+      it 'creates and caches a new client' do
+        expect(Aws::SecretsManager::Client)
+          .to receive(:new)
+          .and_return(smclient).ordered
+
+        expect(context)
+          .to receive(:cache)
+          .with(smclient_key, smclient).ordered
+
+        expect(subject).to run.with_params(key, options, context)
+      end
+
+      it 'sets the AWS region in the new client' do
+        expect(Aws::SecretsManager::Client)
+          .to receive(:new)
+          .with(a_hash_including(:region => 'us-east-1'))
+        expect(subject).to run.with_params(key, options, context)
+      end
     end
   end
 
