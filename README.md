@@ -89,12 +89,20 @@ hierarchy:
   - name: AWS Secrets Manager
     lookup_key: hiera_aws_secretsmanager
     uris:
-      - /secrets/${::environment}/
+      - secrets/${::environment}/
+    options:
+      region: us-east-1
 ```
 
 Then `lookup('myapp::database::password')` will find,
-e.g. `/secrets/development/myapp::database::password` in Secrets
+e.g. `secrets/development/myapp::database::password` in Secrets
 Manager and return its `secret_string` attribute.
+
+#### Notes
+
+1. Paths in Secrets Manager may not have a leading `/`.
+2. Getting `$AWS_REGION` set in the context of the catalog compile
+   turns out to be a pain, so the `region` option is required for now.
 
 ### Caching
 
