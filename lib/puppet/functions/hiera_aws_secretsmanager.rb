@@ -1,6 +1,8 @@
 require 'puppet'
 require 'puppet/functions'
 
+require 'json'
+
 Puppet::Functions.create_function(:hiera_aws_secretsmanager) do
   # An implementation of a lookup_key Puppet Function for Hiera.
   # Looks up keys in AWS Secrets Manager.
@@ -39,6 +41,12 @@ Puppet::Functions.create_function(:hiera_aws_secretsmanager) do
   end
 
   def lookup_key(key, options, context)
+    # Secrets Manager does not allow ':' in secret names, so we
+    # translate them here. We choose '=' merely because it is
+    # graphically similar to ':'. This could be amended to
+    # quoted-printable in the future if needed.
+    key = key.dup.tr!(':', '=')
+
     @context = context
     @options = options
     unless options.include? 'uri'
@@ -72,7 +80,9 @@ Puppet::Functions.create_function(:hiera_aws_secretsmanager) do
   def cached_secret(secret_name)
     unless @context.cache_has_key(secret_name)
       secret = smclient.get_secret_value(secret_id: secret_name)
-      @context.cache(secret_name, secret.secret_string)
+      secret_object = JSON.parse(secret.secret_string,
+                                 symbolize_names: false)
+      @context.cache(secret_name, secret_object)
     end
 
     @context.cached_value(secret_name)

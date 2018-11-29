@@ -10,9 +10,10 @@ describe :hiera_aws_secretsmanager do
   end
 
   let (:key) { 'test::key' }
+  let (:translated_key) { key.tr(':', '=') }
   let (:options) {
     {
-      'uri' => '/test/secret/path',
+      'uri' => 'test/secret/path',
       'region' => 'us-east-1',
     }
   }
@@ -39,8 +40,8 @@ describe :hiera_aws_secretsmanager do
     }
   }
 
-  let (:secret) { OpenStruct.new(name: secret_name, secret_string: secret_string) }
-  let (:secret_name) { "#{options['uri']}/#{key}" }
+  let (:secret) { OpenStruct.new(name: secret_name, secret_string: secret_string.to_json) }
+  let (:secret_name) { "#{options['uri']}/#{translated_key}" }
   let (:secret_string) { 'test-secret' }
 
   let (:smclient) {
@@ -128,13 +129,66 @@ describe :hiera_aws_secretsmanager do
         expect(subject).to run.with_params(key, options, context)
       end
 
-      it 'returns the value of the key' do
+      it 'converts : to = in the key' do
         expect(smclient)
           .to receive(:get_secret_value)
-          .with(hash_including(secret_id: secret_name))
+          .with(a_hash_including(secret_id: secret_name))
+        expect(subject).to run.with_params(key, options, context)
+      end
+
+      it 'returns the secret' do
+        expect(smclient)
+          .to receive(:get_secret_value)
+          .with(a_hash_including(secret_id: secret_name))
           .and_return(secret)
 
         expect(subject).to run.with_params(key, options, context).and_return(secret_string)
+      end
+
+      context 'when secret is a JSON object' do
+        let (:secret_value) { { 'test_hash_key' => 'test_hash_value' } }
+        let (:secret) { OpenStruct.new(name: secret_name, secret_string: secret_value.to_json) }
+
+        before do
+          allow(smclient)
+            .to receive(:get_secret_value)
+            .with(a_hash_including(secret_id: secret_name))
+            .and_return(secret)
+        end
+
+        it 'caches the parsed JSON object as a Ruby Hash' do
+          expect(subject).to run.with_params(key, options, context)
+          expect(fake_cache).to include(secret_name => secret_value)
+        end
+
+        it 'returns the parsed JSON object as a Ruby Hash' do
+          expect(subject).to run
+            .with_params(key, options, context)
+            .and_return(secret_value)
+        end
+      end
+
+      context 'when secret is a JSON array' do
+        let (:secret_value) { ['test-a1'] }
+        let (:secret) { OpenStruct.new(name: secret_name, secret_string: secret_value.to_json) }
+
+        before do
+          allow(smclient)
+            .to receive(:get_secret_value)
+            .with(a_hash_including(secret_id: secret_name))
+            .and_return(secret)
+        end
+
+        it 'caches the parsed JSON object as a Ruby Array' do
+          expect(subject).to run.with_params(key, options, context)
+          expect(fake_cache).to include(secret_name => secret_value)
+        end
+
+        it 'returns the parsed JSON object as a Ruby Array' do
+          expect(subject).to run
+            .with_params(key, options, context)
+            .and_return(secret_value)
+        end
       end
     end
 
