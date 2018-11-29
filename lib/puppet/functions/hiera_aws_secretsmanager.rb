@@ -81,12 +81,15 @@ Puppet::Functions.create_function(:hiera_aws_secretsmanager) do
   def cached_secret(secret_name)
     unless @context.cache_has_key(secret_name)
       secret = smclient.get_secret_value(secret_id: secret_name)
+      @context.explain { "Found secret: #{secret_name}\n#{secret.inspect}" }
       begin
         secret_object = JSON.parse(secret.secret_string,
                                    symbolize_names: false)
+        @context.explain { "Secret parsed as JSON:\n#{secret_object.inspect}" }
       rescue JSON::ParserError
         # If it doesn't parse as JSON, just return the string
         secret_object = secret.secret_string
+        @context.explain { "Secrets is plain string: #{secret_object.inspect}" }
       end
       @context.cache(secret_name, secret_object)
     end

@@ -31,6 +31,12 @@ describe :hiera_aws_secretsmanager do
       allow(ctx).to receive(:cached_value) do |key|
         fake_cache[key]
       end
+
+      allow(ctx).to receive(:explain) do
+        if block_given?
+          puts yield
+        end
+      end
     end
   }
 
