@@ -40,7 +40,7 @@ describe :hiera_aws_secretsmanager do
     }
   }
 
-  let (:secret) { OpenStruct.new(name: secret_name, secret_string: secret_string.to_json) }
+  let (:secret) { OpenStruct.new(name: secret_name, secret_string: secret_string) }
   let (:secret_name) { "#{options['uri']}/#{translated_key}" }
   let (:secret_string) { 'test-secret' }
 
@@ -164,7 +164,7 @@ describe :hiera_aws_secretsmanager do
         it 'returns the parsed JSON object as a Ruby Hash' do
           expect(subject).to run
             .with_params(key, options, context)
-            .and_return(secret_value)
+            .and_return({'test_hash_key' => 'test_hash_value'})
         end
       end
 
