@@ -82,9 +82,13 @@ Puppet::Functions.create_function(:hiera_aws_secretsmanager) do
     unless @context.cache_has_key(secret_name)
       secret = smclient.get_secret_value(secret_id: secret_name)
       @context.explain { "Found secret: #{secret_name}\n#{secret.inspect}" }
-      secret_object = JSON.parse(secret.secret_string,
-                                 symbolize_names: false,
-                                 quirks_mode: true)
+
+      if JSON::VERSION_MAJOR < 2 then # Gross but we had to punt.
+        secret_object = JSON.parse(secret.secret_string, quirks_mode: true)
+      else
+        secret_object = JSON.parse(secret.secret_string)
+      end
+
       @context.explain { "Secret parsed as JSON:\n#{secret_object.inspect}" }
       @context.cache(secret_name, secret_object)
     end
