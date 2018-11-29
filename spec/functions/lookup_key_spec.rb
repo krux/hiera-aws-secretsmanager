@@ -46,7 +46,7 @@ describe :hiera_aws_secretsmanager do
     }
   }
 
-  let (:secret) { OpenStruct.new(name: secret_name, secret_string: secret_string) }
+  let (:secret) { OpenStruct.new(name: secret_name, secret_string: secret_string.to_json) }
   let (:secret_name) { "#{options['uri']}/#{translated_key}" }
   let (:secret_string) { 'test-secret' }
 
