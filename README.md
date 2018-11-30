@@ -23,7 +23,8 @@ An opinionated Hiera 5 `lookup_key` function for AWS Secrets Manager.
 Requires the `aws-sdk-secretsmanager` gem:
 
 ``` shell
-puppetserver gem install aws-sdk-secretsmanager
+/opt/puppetlabs/puppet/bin/gem install aws-sdk-secretsmanager
+/opt/puppetlabs/server/bin/puppetserver gem install aws-sdk-secretsmanager
 ```
 
 or
@@ -32,6 +33,11 @@ or
 package { 'aws-sdk-secretsmanager':
   ensure   => 'present',
   provider => 'puppet_gem',
+}
+
+package { 'aws-sdk-secretsmanager':
+  ensure   => 'present',
+  provider => 'puppetserver_gem',
 }
 ```
 
