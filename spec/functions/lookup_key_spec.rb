@@ -20,21 +20,36 @@ describe :hiera_aws_secretsmanager do
 
   let (:context) {
     double(Puppet::Pops::Lookup::Context).tap do |ctx|
-      allow(ctx).to receive(:cache) do |key, value|
+      allow(ctx).to receive(:cache).with(String, anything) do |key, value|
         fake_cache[key] = value
       end
 
-      allow(ctx).to receive(:cache_has_key) do |key|
+      allow(ctx).to receive(:cache_has_key).with(String) do |key|
         fake_cache.key? key
       end
 
-      allow(ctx).to receive(:cached_value) do |key|
+      allow(ctx).to receive(:cached_value).with(String) do |key|
         fake_cache[key]
       end
 
       allow(ctx).to receive(:explain) do
         if block_given?
           puts yield
+        end
+      end
+
+      allow(ctx).to receive(:interpolate).with(anything) do |string|
+        if string['%{'] then
+          STDERR.puts <<~END
+
+            WARNING: In order to test strings with Puppet
+            interpolations, you have to define an allow(context).to
+            receive(:interpolation) block in your local context.
+
+          END
+          "unexpected interpolation tag found in '#{string}'"
+        else
+          string
         end
       end
     end
@@ -151,49 +166,77 @@ describe :hiera_aws_secretsmanager do
         expect(subject).to run.with_params(key, options, context).and_return(secret_string)
       end
 
-      context 'when secret is a JSON object' do
-        let (:secret_value) { { 'test_hash_key' => 'test_hash_value' } }
-        let (:secret) { OpenStruct.new(name: secret_name, secret_string: secret_value.to_json) }
+      context 'result post-processing' do
+        context 'when secret is a JSON string value' do
+          let (:secret_value) { 'test-%{}' }
+          let (:secret) { OpenStruct.new(name: secret_name, secret_string: secret_value.to_json) }
+          let (:interpolated_value) { 'test-secret' }
 
-        before do
-          allow(smclient)
-            .to receive(:get_secret_value)
-            .with(a_hash_including(secret_id: secret_name))
-            .and_return(secret)
+          it 'does Puppet interpolation before JSON parsing' do
+            expect(context).to receive(:interpolate)
+              .with(secret.secret_string)
+              .and_return(interpolated_value.to_json).ordered
+
+            allow(JSON).to receive(:parse).with(String, anything).and_call_original
+            expect(JSON).to receive(:parse).with(interpolated_value.to_json, anything)
+
+            expect(subject).to run.with_params(key, options, context)
+          end
+
+          it 'returns the string after interpolation' do
+            expect(context)
+              .to receive(:interpolate)
+              .with(secret.secret_string)
+              .and_return(interpolated_value.to_json)
+
+            expect(subject).to run.with_params(key, options, context).and_return(interpolated_value)
+          end
         end
 
-        it 'caches the parsed JSON object as a Ruby Hash' do
-          expect(subject).to run.with_params(key, options, context)
-          expect(fake_cache).to include(secret_name => secret_value)
+        context 'when secret is a JSON object' do
+          let (:secret_value) { { 'test_hash_key' => 'test_hash_value' } }
+          let (:secret) { OpenStruct.new(name: secret_name, secret_string: secret_value.to_json) }
+
+          before do
+            allow(smclient)
+              .to receive(:get_secret_value)
+              .with(a_hash_including(secret_id: secret_name))
+              .and_return(secret)
+          end
+
+          it 'caches the parsed JSON object as a Ruby Hash' do
+            expect(context).to receive(:cache).with(secret_name, secret_value)
+            expect(subject).to run.with_params(key, options, context)
+          end
+
+          it 'returns the parsed JSON object as a Ruby Hash' do
+            expect(subject).to run
+              .with_params(key, options, context)
+              .and_return(secret_value)
+          end
         end
 
-        it 'returns the parsed JSON object as a Ruby Hash' do
-          expect(subject).to run
-            .with_params(key, options, context)
-            .and_return({'test_hash_key' => 'test_hash_value'})
-        end
-      end
+        context 'when secret is a JSON array' do
+          let (:secret_value) { ['test-a1'] }
+          let (:secret) { OpenStruct.new(name: secret_name, secret_string: secret_value.to_json) }
 
-      context 'when secret is a JSON array' do
-        let (:secret_value) { ['test-a1'] }
-        let (:secret) { OpenStruct.new(name: secret_name, secret_string: secret_value.to_json) }
+          before do
+            allow(smclient)
+              .to receive(:get_secret_value)
+              .with(a_hash_including(secret_id: secret_name))
+              .and_return(secret)
+          end
 
-        before do
-          allow(smclient)
-            .to receive(:get_secret_value)
-            .with(a_hash_including(secret_id: secret_name))
-            .and_return(secret)
-        end
+          it 'caches the parsed JSON object as a Ruby Array' do
+            expect(context).to receive(:cache).with(secret_name, secret_value)
+            expect(subject).to run.with_params(key, options, context)
+          end
 
-        it 'caches the parsed JSON object as a Ruby Array' do
-          expect(subject).to run.with_params(key, options, context)
-          expect(fake_cache).to include(secret_name => secret_value)
-        end
-
-        it 'returns the parsed JSON object as a Ruby Array' do
-          expect(subject).to run
-            .with_params(key, options, context)
-            .and_return(secret_value)
+          it 'returns the parsed JSON object as a Ruby Array' do
+            expect(subject).to run
+              .with_params(key, options, context)
+              .and_return(secret_value)
+          end
         end
       end
     end
