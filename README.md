@@ -103,6 +103,8 @@ for the `SecretString` member:
 
 false
 
+null
+
 { "username": "sooper", "password": "seekrit" }
 
 [ 1, 2, 3 ]
@@ -155,7 +157,7 @@ mymod::myclass::username: the_user
 
 **create the secret:**
 ``` shell
-aws secretsmanager create-seret --name puppet/environment/prod/mymod==myclass==password --secret-string file://tmp/secret.json
+aws secretsmanager create-secret --name puppet/environment/prod/mymod==myclass==password --secret-string file://tmp/secret.json
 ```
 
 ### Configuration
