@@ -100,6 +100,7 @@ Puppet::Functions.create_function(:hiera_aws_secretsmanager) do
 
   def cached_secrets_list
     unless @context.cache_has_key(SECRETS_LIST_KEY)
+      @context.explain { 'Secret list not cached. Listing secrets.' }
       batch = smclient.list_secrets(max_results: LIST_SECRETS_MAX)
       secrets_list = batch.secret_list.map(&:name)
       while batch.next_token do
