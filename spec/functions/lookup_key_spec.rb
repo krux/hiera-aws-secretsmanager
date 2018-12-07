@@ -135,7 +135,7 @@ describe :hiera_aws_secretsmanager do
       expect(subject).to run.with_params(key, options, context)
     end
   end
-  
+
   context 'with an existing key' do
     context 'that is not cached' do
       it 'checks the cache first' do
@@ -178,7 +178,7 @@ describe :hiera_aws_secretsmanager do
               .and_return(interpolated_value.to_json).ordered
 
             allow(JSON).to receive(:parse).with(String, anything).and_call_original
-            expect(JSON).to receive(:parse).with(interpolated_value.to_json, anything)
+            expect(JSON).to receive(:parse).with(String interpolated_value.to_json)
 
             expect(subject).to run.with_params(key, options, context)
           end
