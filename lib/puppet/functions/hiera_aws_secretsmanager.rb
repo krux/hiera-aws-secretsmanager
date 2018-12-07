@@ -36,9 +36,10 @@ Puppet::Functions.create_function(:hiera_aws_secretsmanager) do
   # Puppet feeling the need to reload this file over and over.
   unless defined? LIST_SECRETS_MAX
     LIST_SECRETS_MAX = 100
-    SECRETS_LIST_KEY = '_hiera_aws_seretsmanager_key_list_'.freeze
     SMCLIENT_KEY = '_hiera_aws_secretsmanager_smclient_'.freeze
   end
+
+  @secrets_list = nil
 
   def lookup_key(key, options, context)
     # Secrets Manager does not allow ':' in secret names, so we
@@ -99,17 +100,16 @@ Puppet::Functions.create_function(:hiera_aws_secretsmanager) do
   end
 
   def cached_secrets_list
-    unless @context.cache_has_key(SECRETS_LIST_KEY)
+    unless @secrets_list
+      @context.explain { "SecretsList not cached. Listing all secrets." }
       batch = smclient.list_secrets(max_results: LIST_SECRETS_MAX)
-      secrets_list = batch.secret_list.map(&:name)
+      @secrets_list = batch.secret_list.map(&:name)
       while batch.next_token do
         batch = smclient.list_secrets(max_results: LIST_SECRETS_MAX, next_token: batch.next_token)
-        secrets_list.concat batch.secret_list.map(&:name)
+        @secrets_list.concat batch.secret_list.map(&:name)
       end
-      @context.cache(SECRETS_LIST_KEY, secrets_list)
     end
-
-    @context.cached_value(SECRETS_LIST_KEY)
+    @secrets_list
   end
 
   def secret_exists?(secret_name)
