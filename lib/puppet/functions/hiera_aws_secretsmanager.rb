@@ -47,9 +47,7 @@ Puppet::Functions.create_function(:hiera_aws_secretsmanager) do
     # graphically similar to ':'. This could be amended to
     # quoted-printable in the future if needed.
     # Check for separator to see if it needs translated
-    if key.include? ":"
-      key = key.dup.tr!(':', '=')
-    end
+    key = key.tr!(':', '=')
 
     @context = context
     @options = options
