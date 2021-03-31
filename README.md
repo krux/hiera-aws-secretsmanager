@@ -175,6 +175,7 @@ hierarchy:
       - "secrets/%{::environment}/"
     options:
       region: us-east-1
+      statsd: true # optional
 ```
 
 Then `lookup('myapp::database::password')` will find,
@@ -193,6 +194,12 @@ In order to conserve API calls (which are not free), lookup will list
 and cache all secret names on first execution, as well any secrets
 fetched. This is why `secretsmanager:ListSecrets` privilege is
 required.
+
+### StatsD
+
+Setting `options.statsd: true` will enable some statsd reporting using
+Shopify/statsd-instrument. If false or missing, no change in behavior
+is expected.
 
 ## Limitations
 

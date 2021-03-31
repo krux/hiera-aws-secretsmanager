@@ -55,6 +55,8 @@ Puppet::Functions.create_function(:hiera_aws_secretsmanager) do
       raise ArgumentError, "either 'uri' or 'uris' must be set in hiera.yaml"
     end
 
+    setup_stats_if_enabled
+
     secret_name = "#{options['uri']}/#{key}"
     if secret_exists? secret_name then
       return cached_secret(secret_name)
@@ -73,10 +75,30 @@ Puppet::Functions.create_function(:hiera_aws_secretsmanager) do
       unless @options.key? 'region'
         raise ArgumentError, 'options: {region: ...} must be set in hiera.yaml'
       end
+
       @context.cache(SMCLIENT_KEY, Aws::SecretsManager::Client.new(region: @options['region']))
     end
 
     @context.cached_value(SMCLIENT_KEY)
+  end
+
+  def setup_stats_if_enabled
+    return unless @options['statsd']
+
+    # smclient's class might not be constant due to mocking
+    smclient_class = smclient.class
+
+    # Guard due to module reloading
+    return if smclient_class.class_variable_defined?(:@@__hasm_stats_setup_done)
+    smclient_class.class_variable_set(:@@__hasm_stats_setup_done, true)
+
+    # Workaround for AWS SDK redefining Module.extend :table-flip-emoji:
+    smclient_class.singleton_class.include StatsD::Instrument
+
+    smclient_class.statsd_count :list_secrets, 'hiera_aws_secretsmanager.list_secrets'
+    smclient_class.statsd_measure :list_secrets, 'hiera_aws_secretsmanager.list_secrets'
+    smclient_class.statsd_count :get_secret_value, 'hiera_aws_secretsmanager.get_secret_value'
+    smclient_class.statsd_measure :get_secret_value, 'hiera_aws_secretsmanager.get_secret_value'
   end
 
   def cached_secret(secret_name)

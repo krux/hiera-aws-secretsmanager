@@ -15,6 +15,7 @@ describe :hiera_aws_secretsmanager do
     {
       'uri' => 'test/secret/path',
       'region' => 'us-east-1',
+      'statsd' => true,
     }
   }
 
@@ -75,6 +76,11 @@ describe :hiera_aws_secretsmanager do
         .to receive(:get_secret_value)
         .with(hash_including(secret_id: secret_name))
         .and_return(secret)
+
+      # StatsD::Instrument needs this
+      allow(smclient.class)
+        .to receive(:method_defined?)
+        .and_return(true)
     end
   }
 
@@ -129,8 +135,7 @@ describe :hiera_aws_secretsmanager do
 
   context 'with a cached client' do
     it 'uses the cached client' do
-      expect(Aws::SecretsManager::Client)
-        .not_to receive(:new)
+      expect(Aws::SecretsManager::Client).not_to receive(:new)
 
       expect(subject).to run.with_params(key, options, context)
     end
@@ -148,6 +153,13 @@ describe :hiera_aws_secretsmanager do
         expect(smclient).to receive(:get_secret_value).ordered
 
         expect(subject).to run.with_params(key, options, context)
+      end
+
+      it 'sends metrics' do
+        skip "between mocking and Puppet indirection weirdness, I haven't figured out how to test this"
+        expect {
+          expect(subject).to run.with_params(key, options, context)
+        }.to trigger_statsd_increment('hiera_aws_secrets_manager.list_secrets')
       end
 
       it 'converts : to = in the key' do
