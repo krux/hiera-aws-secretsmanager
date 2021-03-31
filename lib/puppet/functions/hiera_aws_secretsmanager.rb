@@ -92,7 +92,13 @@ Puppet::Functions.create_function(:hiera_aws_secretsmanager) do
     return if smclient_class.class_variable_defined?(:@@__hasm_stats_setup_done)
     smclient_class.class_variable_set(:@@__hasm_stats_setup_done, true)
 
-    # Workaround for AWS SDK redefining Module.extend :table-flip-emoji:
+    begin
+      require 'statsd/instrument'
+    rescue LoadError
+      raise Puppet::DataBinding::LookupError, 'hiera_aws_secretsmanager requires the statsd-instrument gem if statsd: true'
+    end
+
+    # Workaround for AWS SDK redefining Module#extend (:table-flip-emoji:)
     smclient_class.singleton_class.include StatsD::Instrument
 
     smclient_class.statsd_count :list_secrets, 'hiera_aws_secretsmanager.list_secrets'
