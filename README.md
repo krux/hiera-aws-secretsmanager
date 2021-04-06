@@ -22,14 +22,14 @@ An opinionated Hiera 5 `lookup_key` function for AWS Secrets Manager.
 
 Requires the `aws-sdk-secretsmanager` gem:
 
-``` shell
+```shell
 /opt/puppetlabs/puppet/bin/gem install aws-sdk-secretsmanager
 /opt/puppetlabs/server/bin/puppetserver gem install aws-sdk-secretsmanager
 ```
 
 or
 
-``` puppet
+```puppet
 package { 'aws-sdk-secretsmanager':
   ensure   => 'present',
   provider => 'puppet_gem',
@@ -38,6 +38,30 @@ package { 'aws-sdk-secretsmanager':
 package { 'aws-sdk-secretsmanager':
   ensure   => 'present',
   provider => 'puppetserver_gem',
+}
+```
+
+If you want statsd reporting, then the Shopify/statsd-instrument gem is needed too:
+
+```shell
+/opt/puppetlabs/puppet/bin/gem install statsd-instrument -v '~> 3.0.1'
+/opt/puppetlabs/server/bin/puppetserver gem install statsd-instrument -v '~> 3.0.1'
+```
+
+or
+
+```puppet
+package { 'statsd-instrument':
+  ensure   => '~> 3.0.1',
+  name     => 'statsd-instrument',
+  provider => 'puppet_gem',
+}
+
+package { 'statsd-instrument-puppetserver':
+  ensure   => '~> 3.0.1',
+  name     => 'statsd-instrument',
+  provider => 'puppetserver_gem',
+  require  => Class['puppet']
 }
 ```
 
@@ -175,6 +199,7 @@ hierarchy:
       - "secrets/%{::environment}/"
     options:
       region: us-east-1
+      statsd: true # optional
 ```
 
 Then `lookup('myapp::database::password')` will find,
@@ -193,6 +218,12 @@ In order to conserve API calls (which are not free), lookup will list
 and cache all secret names on first execution, as well any secrets
 fetched. This is why `secretsmanager:ListSecrets` privilege is
 required.
+
+### StatsD
+
+Setting `options.statsd: true` will enable some statsd reporting using
+Shopify/statsd-instrument. If false or missing, no change in behavior
+is expected.
 
 ## Limitations
 
