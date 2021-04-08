@@ -21,3 +21,4 @@
 /tmp/
 /vendor/
 /.vendor/
+/.rspec_status
