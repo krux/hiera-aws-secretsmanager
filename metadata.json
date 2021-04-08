@@ -6,7 +6,7 @@
   "license": "Apache-2.0",
   "source": "https://github.com/krux/hiera-aws-secretsmanager",
   "dependencies": [
-    { "name": "puppetlabs-stdlib", "version_requirement": ">= 1.0.0" },
+    { "name": "puppetlabs-stdlib", "version_requirement": ">= 1.0.0" }
   ],
   "data_provider": null
 }
