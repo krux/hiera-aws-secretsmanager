@@ -92,6 +92,10 @@ Puppet::Functions.create_function(:hiera_aws_secretsmanager) do
     return if smclient_class.class_variable_defined?(:@@__hasm_stats_setup_done)
     smclient_class.class_variable_set(:@@__hasm_stats_setup_done, true)
 
+    # STATSD_ENV defaults to `development`. I don't know any other way
+    # to set it so that Hiera inside Puppet Enterprise gets it.
+    ENV['STATSD_ENV'] = 'production' unless ENV['STATSD_ENV']
+
     begin
       require 'statsd/instrument'
     rescue LoadError
