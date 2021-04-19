@@ -1,4 +1,4 @@
-ENV['STATSD_ENV'] = 'development'
+ENV['STATSD_ENV'] = 'test'
 require 'statsd/instrument'
 
 RSpec.configure do |c|
