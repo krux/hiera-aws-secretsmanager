@@ -86,6 +86,7 @@ Puppet::Functions.create_function(:hiera_aws_secretsmanager) do
     smclient_options = {region: @options['region']}
     smclient_options.merge!(retry_options)
     @context.explain { "Aws::SecretsManager::Client options: #{smclient_options}" }
+    smclient_options
   end
 
   # https://docs.aws.amazon.com/sdk-for-ruby/v3/api/Aws/SecretsManager/Client.html#initialize-instance_method
