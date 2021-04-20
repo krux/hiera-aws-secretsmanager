@@ -16,6 +16,10 @@ describe :hiera_aws_secretsmanager do
       'uri' => 'test/secret/path',
       'region' => 'us-east-1',
       'statsd' => true,
+      'retries' => {
+        'retry_mode' => 'adaptive',
+        'max_attempts' => 10,
+      }
     }
   }
 
