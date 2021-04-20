@@ -1,5 +1,6 @@
 ENV['STATSD_ENV'] = 'test'
 require 'statsd/instrument'
+require 'aws-sdk-secretsmanager'
 
 RSpec.configure do |c|
   c.mock_with :rspec

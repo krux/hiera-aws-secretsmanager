@@ -20,7 +20,7 @@ describe :hiera_aws_secretsmanager do
   }
 
   let (:context) {
-    double(Puppet::Pops::Lookup::Context).tap do |ctx|
+    Puppet::Pops::Lookup::Context.new('test-environment', 'test-module').tap do |ctx|
       allow(ctx).to receive(:cache).with(String, anything) do |key, value|
         fake_cache[key] = value
       end
@@ -91,13 +91,6 @@ describe :hiera_aws_secretsmanager do
   end
 
   context 'without a cached client' do
-    before do
-      expect(context)
-        .to receive(:cache_has_key)
-        .with(smclient_key)
-        .and_return(false).ordered
-    end
-
     context 'and no region is given' do
       before do
         options.delete('region')
@@ -116,10 +109,6 @@ describe :hiera_aws_secretsmanager do
         expect(Aws::SecretsManager::Client)
           .to receive(:new)
           .and_return(smclient).ordered
-
-        expect(context)
-          .to receive(:cache)
-          .with(smclient_key, smclient).ordered
 
         expect(subject).to run.with_params(key, options, context)
       end
