@@ -8,6 +8,9 @@
     * [Setup requirements](#setup-requirements)
     * [Beginning with hiera_aws_secretsmanager](#beginning-with-hiera_aws_secretsmanager)
 1. [Usage - Configuration options and additional functionality](#usage)
+    * [Notes](#notes)
+    * [Retry/Backoff](#retrybackoff)
+    * [StatsD](#statsd)
 1. [Reference - An under-the-hood peek at what the module is doing and how](#reference)
 1. [Limitations - OS compatibility, etc.](#limitations)
 1. [Development - Guide for contributing to the module](#development)
@@ -200,6 +203,9 @@ hierarchy:
     options:
       region: us-east-1
       statsd: true # optional
+      retries: # optional
+        retry_mode: adaptive
+        max_attempts: 10
 ```
 
 Then `lookup('myapp::database::password')` will find,
@@ -212,18 +218,27 @@ Manager and return its `secret_string` attribute.
 2. Getting `$AWS_REGION` set in the context of the catalog compile
    turns out to be a pain, so the `region` option is required for now.
 
+#### Retry/Backoff
+
+It is possible to configure the AWS SDK retry/backoff by adding a
+`options.retries` hash. Its value is passed to the AWS SDK with
+minimal sanity checking. See the [Aws::SecretsManager::Client#initialize]
+documentation for allowed values.
+
+[Aws::SecretsManager::Client#initialize]: https://docs.aws.amazon.com/sdk-for-ruby/v3/api/Aws/SecretsManager/Client.html#initialize-instance_method
+
+#### StatsD
+
+Setting `options.statsd: true` will enable some statsd reporting using
+Shopify/statsd-instrument. If false or missing, no change in behavior
+is expected.
+
 ### Caching
 
 In order to conserve API calls (which are not free), lookup will list
 and cache all secret names on first execution, as well any secrets
 fetched. This is why `secretsmanager:ListSecrets` privilege is
 required.
-
-### StatsD
-
-Setting `options.statsd: true` will enable some statsd reporting using
-Shopify/statsd-instrument. If false or missing, no change in behavior
-is expected.
 
 ## Limitations
 

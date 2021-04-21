@@ -76,10 +76,37 @@ Puppet::Functions.create_function(:hiera_aws_secretsmanager) do
         raise ArgumentError, 'options: {region: ...} must be set in hiera.yaml'
       end
 
-      @context.cache(SMCLIENT_KEY, Aws::SecretsManager::Client.new(region: @options['region']))
+      @context.cache(SMCLIENT_KEY, Aws::SecretsManager::Client.new(smclient_options))
     end
 
     @context.cached_value(SMCLIENT_KEY)
+  end
+
+  def smclient_options
+    smclient_options = {region: @options['region']}
+    smclient_options.merge!(retry_options)
+    @context.explain { "Aws::SecretsManager::Client options: #{smclient_options}" }
+    smclient_options
+  end
+
+  # https://docs.aws.amazon.com/sdk-for-ruby/v3/api/Aws/SecretsManager/Client.html#initialize-instance_method
+  def retry_options
+    return {} unless @options['retries']
+
+    allowed_opts = %w[
+      adaptive_retry_wait_to_fill
+      max_attempts
+      retry_backoff
+      retry_base_delay
+      retry_jitter
+      retry_limit
+      retry_max_delay
+      retry_mode
+    ]
+
+    @options['retries']
+      .select { |opt, _| allowed_opts.member?(opt) }
+      .transform_keys!(&:to_sym)
   end
 
   def setup_stats_if_enabled
