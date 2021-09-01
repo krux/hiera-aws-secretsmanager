@@ -68,6 +68,17 @@ package { 'statsd-instrument-puppetserver':
 }
 ```
 
+### Installation
+
+You can either clone this repository and include it in your puppet modules (named as `hiera_aws_secretsmanager`), or if you are using r10k,
+add it to your puppetfile as:
+
+```
+mod 'hiera_aws_secretsmanager',
+    :git => 'https://github.com/krux/hiera-aws-secretsmanager',
+    :tag => 'v0.1.2'
+```
+
 ### Authentication
 
 Auth is expected to be taken care of outside of Puppet. There are
@@ -143,11 +154,11 @@ contexts. E.g.
 
 ``` ruby
 new_secret = "a string"
-client.update_secret(secret_id: 'puppet/environment/prod/secret_key', secret_string: "\"#{new_secret}\"")
+client.update_secret(secret_id: 'puppet/production/secret_key', secret_string: "\"#{new_secret}\"")
 ```
 although much better in this instance would be
 ``` ruby
-client.update_secret(secret_id: 'puppet/environment/prod/secret_key', secret_string: new_secret.to_json)
+client.update_secret(secret_id: 'puppet/production/secret_key', secret_string: new_secret.to_json)
 ```
 
 #### Character Translation In Secret Names
@@ -172,7 +183,7 @@ We would probably like to find `username` in our favorite Hiera
 backend (let's just say YAML), and `password` in our secret
 store. We can set this up with:
 
-**data/environment/prod/common.yaml:**
+**data/environment/production/common.yaml:**
 ``` yaml
 mymod::myclass::username: the_user
 ```
@@ -184,7 +195,7 @@ mymod::myclass::username: the_user
 
 **create the secret:**
 ``` shell
-aws secretsmanager create-secret --name puppet/environment/prod/mymod==myclass==password --secret-string file://tmp/secret.json
+aws secretsmanager create-secret --name puppet/production/mymod==myclass==password --secret-string file://tmp/secret.json
 ```
 
 ### Configuration
@@ -199,7 +210,7 @@ hierarchy:
   - name: AWS Secrets Manager
     lookup_key: hiera_aws_secretsmanager
     uris:
-      - "secrets/%{::environment}/"
+      - "secrets/%{::environment}"
     options:
       region: us-east-1
       statsd: true # optional
@@ -215,7 +226,8 @@ Manager and return its `secret_string` attribute.
 #### Notes
 
 1. Paths in Secrets Manager may not have a leading `/`.
-2. Getting `$AWS_REGION` set in the context of the catalog compile
+1. uris in the hiera configuration must not have a trailing `/`
+1. Getting `$AWS_REGION` set in the context of the catalog compile
    turns out to be a pain, so the `region` option is required for now.
 
 #### Retry/Backoff
