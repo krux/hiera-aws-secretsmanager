@@ -19,6 +19,11 @@ describe :hiera_aws_secretsmanager do
       'retries' => {
         'retry_mode' => 'adaptive',
         'max_attempts' => 10,
+      },
+      'endpoint' => {
+        'endpoint' => 'https://my.private.endpoint.aws.com',
+        'endpoint_cache_max_threads' => 5,
+        'endpoint_discovery' => false,
       }
     }
   }

@@ -85,6 +85,7 @@ Puppet::Functions.create_function(:hiera_aws_secretsmanager) do
   def smclient_options
     smclient_options = {region: @options['region']}
     smclient_options.merge!(retry_options)
+    smclient_options.merge!(endpoint_options)
     @context.explain { "Aws::SecretsManager::Client options: #{smclient_options}" }
     smclient_options
   end
@@ -105,6 +106,23 @@ Puppet::Functions.create_function(:hiera_aws_secretsmanager) do
     ]
 
     @options['retries']
+      .select { |opt, _| allowed_opts.member?(opt) }
+      .transform_keys!(&:to_sym)
+  end
+
+  # https://docs.aws.amazon.com/sdk-for-ruby/v3/api/Aws/SecretsManager/Client.html#initialize-instance_method
+  def endpoint_options
+    return {} unless @options['endpoint']
+
+    allowed_opts = %w[
+      endpoint
+      endpoint_cache_max_entries
+      endpoint_cache_max_threads
+      endpoint_cache_poll_interval
+      endpoint_discovery
+    ]
+
+    @options['endpoint']
       .select { |opt, _| allowed_opts.member?(opt) }
       .transform_keys!(&:to_sym)
   end

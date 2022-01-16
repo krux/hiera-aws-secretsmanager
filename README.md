@@ -239,6 +239,19 @@ documentation for allowed values.
 
 [Aws::SecretsManager::Client#initialize]: https://docs.aws.amazon.com/sdk-for-ruby/v3/api/Aws/SecretsManager/Client.html#initialize-instance_method
 
+#### Endpoint
+
+It is possible to configure the AWS SDK endpoint by adding a
+`options.endpoint` hash. Its value is passed to the AWS SDK with
+minimal sanity checking. See the [Aws::SecretsManager::Client#initialize]
+documentation for allowed values.
+
+[AWS PrivateLink] is a use case. Which is very convenience to privately connect
+your VPC to supported AWS services, services hosted by other AWS accounts
+(VPC endpoint services), and supported AWS Marketplace partner services.
+
+[AWS PrivateLink]: https://docs.aws.amazon.com/vpc/latest/privatelink/endpoint-services-overview.html
+
 #### StatsD
 
 Setting `options.statsd: true` will enable some statsd reporting using
